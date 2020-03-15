@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29709.97
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeatmapGenerator", "HeatmapGenerator\HeatmapGenerator.csproj", "{67F94AA8-2AE8-45BF-AD47-BC3EDAB5E08F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{67F94AA8-2AE8-45BF-AD47-BC3EDAB5E08F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67F94AA8-2AE8-45BF-AD47-BC3EDAB5E08F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67F94AA8-2AE8-45BF-AD47-BC3EDAB5E08F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67F94AA8-2AE8-45BF-AD47-BC3EDAB5E08F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {50A68298-9A5F-443C-A782-A962EF4671E0}
+	EndGlobalSection
+EndGlobal
