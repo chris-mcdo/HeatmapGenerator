@@ -1,25 +1,38 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace HeatmapGenerator
 {
     class Program
     {
+
         [STAThread]
         static void Main(string[] args)
         {
-            RunFFmpeg();
+            int opt = 0;
 
-            // GenerateLocalHeatmaps();  
+            while (opt != 3)
+            {
+                Console.WriteLine("Select: 1 - generate instantaneous heatmaps (and video); 2 - generate global heatmaps, 3 - exit");
+                opt = int.Parse(Console.ReadLine());
 
-            GenerateGlobalHeatmap();
-        }
+                if (opt == 1)
+                {
+                    GenerateLocalHeatmaps();
+                }
+                else if (opt == 2)
+                {
+                    GenerateGlobalHeatmap();
+                }
+                else if (opt == 3)
+                {
+                    Console.WriteLine("Exiting...");
+                }
+            }
 
-        static void RunFFmpeg()
-        {
-            // work out how to do this
         }
 
         // Series of instantaneous heatmaps
@@ -32,13 +45,13 @@ namespace HeatmapGenerator
             FolderBrowserDialog fbd = new FolderBrowserDialog();
             do
             {
-                Console.WriteLine("Select the experiment folder (press enter to show dialog)...");
+                Console.WriteLine("Navigate to the data folder (press enter to show dialog)...");
                 Console.ReadLine();
             } while (!fbd.ShowDialog().Equals(DialogResult.OK));
 
             dataDir = fbd.SelectedPath + @"\";
-            writeDir = dataDir;
-            Console.WriteLine(dataDir);
+            writeDir = Path.GetFullPath(Path.Combine(dataDir, @"..\..\Heatmaps\Local Heatmaps\")); ;
+            Console.WriteLine(writeDir);
 
             Console.WriteLine("Enter the first frame to read");
             long startFrame = long.Parse(Console.ReadLine());
@@ -50,6 +63,11 @@ namespace HeatmapGenerator
 
             hw.GenerateLocalHeatmaps(startFrame, endFrame);
 
+            Console.WriteLine("Write to video? y/n");
+            if (Console.ReadLine() == "y")
+            {
+                hw.GenerateVideo();
+            }
         }
 
         // Single heatmap; integrated over time period
@@ -62,13 +80,13 @@ namespace HeatmapGenerator
             FolderBrowserDialog fbd = new FolderBrowserDialog();
             do
             {
-                Console.WriteLine("Select the experiment folder (press enter to show dialog)...");
+                Console.WriteLine("Navigate to the data folder (press enter to show dialog) ...");
                 Console.ReadLine();
             } while (!fbd.ShowDialog().Equals(DialogResult.OK));
 
             dataDir = fbd.SelectedPath + @"\";
-            writeDir = dataDir;
-            Console.WriteLine(dataDir);
+            writeDir = Path.GetFullPath(Path.Combine(dataDir, @"..\..\Heatmaps\Global Heatmaps\")); ;
+            Console.WriteLine(writeDir);
 
             Console.WriteLine("Enter the image frame");
             long startFrame = long.Parse(Console.ReadLine());
@@ -81,6 +99,29 @@ namespace HeatmapGenerator
             hw.GenerateGlobalHeatmap(startFrame, endFrame);
 
 
+        }
+
+        static void RunTest()
+        {
+            String str = "\"C:\\Users\\cmcdo\\Documents\\BA Project documents\\6\\\"";
+
+            Process.Start("CMD.exe", "/C dir /a "+str);
+
+            /*
+            Process cmd = new Process();
+            cmd.StartInfo.FileName = "cmd.exe";
+            cmd.StartInfo.RedirectStandardInput = true;
+            cmd.StartInfo.RedirectStandardOutput = true;
+            cmd.StartInfo.CreateNoWindow = true;
+            cmd.StartInfo.UseShellExecute = false;
+            cmd.Start();
+
+            cmd.StandardInput.WriteLine("ffmpeg -version");
+            cmd.StandardInput.Flush();
+            cmd.StandardInput.Close();
+            cmd.WaitForExit();
+            Console.WriteLine(cmd.StandardOutput.ReadToEnd());
+            */
         }
 
     }

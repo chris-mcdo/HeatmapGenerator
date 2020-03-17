@@ -21,7 +21,7 @@ namespace HeatmapGenerator
 
         public double MaxVal = 1; // Keeping track of max values saves time
 
-        public HeatmapArray(int width = 1680, int height = 987, double pointRadius = 100, int pointCount = 25)
+        public HeatmapArray(int width = 1680, int height = 987, double pointRadius = 50, int pointCount = 25)
         {
             SetSize(width, height);
             PointRadius = pointRadius;
@@ -60,7 +60,7 @@ namespace HeatmapGenerator
                     {
                         Intensity[x, y] += Math.Exp( - (rXYSqd) / (2 * sdSqd) );
 
-                        if (rXYSqd < rSqd / 3 && Intensity[x, y] > MaxVal)
+                        if (Intensity[x, y] > MaxVal)
                         {
                             MaxVal = Intensity[x, y];
                         }

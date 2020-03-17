@@ -11,9 +11,7 @@ namespace HeatmapGenerator
 {
     class HeatmapWriter
     {
-        public const String RelPathLogger = @"experiment\Logger\EyeLogger.json";
-        public const String RelDirRead = @"experiment\Videos\";
-        public const String RelDirWrite = @"experiment\Heatmaps\";
+        public const String RelPathLogger = @"..\Logger\EyeLogger.json";
 
         // Default range of eye-tracking points to draw on heatmap in ms (forward and backwards in time)
         public const long BackRange = 200, ForwardRange = 200;
@@ -32,7 +30,7 @@ namespace HeatmapGenerator
 
             ReadEyeData();
             GetFileNames();
-            int[] dimensions = GetImageDimension(DataDir + RelDirRead + FrameArray[0] + ".bmp");
+            int[] dimensions = GetImageDimension(DataDir + FrameArray[0] + ".bmp");
             Width = dimensions[0]; Height = dimensions[1];
         }
 
@@ -48,8 +46,7 @@ namespace HeatmapGenerator
             {
                 long frame = frames[0];
                 // Make a new folder to write images (if it doesn't already exist)
-                String writePath = WriteDir + RelDirWrite;
-                System.IO.Directory.CreateDirectory(writePath);
+                System.IO.Directory.CreateDirectory(WriteDir);
 
                 // Create a heatmap for the given range
                 var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -76,16 +73,19 @@ namespace HeatmapGenerator
             if (frames.Length > 0)
             {
                 // Make a new folder to write images (if it doesn't already exist)
-                String writePath = WriteDir + RelDirWrite;
-                System.IO.Directory.CreateDirectory(writePath);
+                System.IO.Directory.CreateDirectory(WriteDir);
 
                 // Create a heatmap for each frame
                 var watch = System.Diagnostics.Stopwatch.StartNew();
 
-                foreach (long frame in frames)
+                for (int i = 0; i < frames.Length; i++)
                 {
-                    CreateHeatmap(frame);
+                    CreateHeatmap(frames[i], fileName: i.ToString());
+                    Console.WriteLine(i*100/frames.Length + "% complete, " + watch.ElapsedMilliseconds / 1000 + " seconds elapsed (frame " +frames[i]+")");
                 }
+
+                GenerateTimecodes(frames); // time codes for frames in text file
+
                 watch.Stop();
                 Console.WriteLine("Generated " +frames.Length + " frames in " + watch.ElapsedMilliseconds/1000 + " seconds");
 
@@ -94,9 +94,9 @@ namespace HeatmapGenerator
         }
 
         // Generate a single heatmap at specified frame
-        public void CreateHeatmap(long frame, long backRange = BackRange, long forwardRange = ForwardRange, String fileName = null)
+        public void CreateHeatmap(long frame, long backRange = BackRange, long forwardRange = ForwardRange, String fileName = "")
         {
-            if (fileName.Equals(null))
+            if (fileName.Equals(""))
             {
                 fileName = frame.ToString();
             }
@@ -109,7 +109,7 @@ namespace HeatmapGenerator
             HeatmapArray ha = new HeatmapArray(width: Width, height: Height, pointCount: pointList.Count);
 
             // Adding eye-tracking points to heatmap
-            Console.WriteLine("Frame "+frame+": adding " + pointList.Count + " eye-tracking points to image");
+            // Console.WriteLine("Frame "+frame+": adding " + pointList.Count + " eye-tracking points to image");
             foreach (EyePoint p in pointList)
             {
                 ha.AddPoint(p.X, p.Y);
@@ -119,14 +119,14 @@ namespace HeatmapGenerator
             HeatmapImage heatImage = new HeatmapImage(width: Width, height: Height);
 
             // Loading source image
-            String readPath = DataDir + RelDirRead + frame + ".bmp";
+            String readPath = DataDir + frame + ".bmp";
             BitmapImage source = new BitmapImage(new Uri(readPath));
 
             // Overlay heatmap and original image
             heatImage.Overlay(source, ha);
 
             // Write to file
-            String writePath = WriteDir + RelDirWrite + fileName; // don't include extension
+            String writePath = WriteDir + fileName; // don't include extension
             heatImage.Save(writePath);
 
         }
@@ -158,13 +158,11 @@ namespace HeatmapGenerator
         // List of all image frames, from source folder
         public void GetFileNames()
         {
-            String readDir = DataDir + RelDirRead;
-            FrameArray = Directory.GetFiles(readDir, "*")
+            FrameArray = Directory.GetFiles(DataDir, "*")
                          .Select(Path.GetFileNameWithoutExtension)
                          .Select(str => long.Parse(str))
                          .OrderBy(f => f)
                          .ToArray();
-            Console.WriteLine("t = " + FrameArray[0] + " is first image frame");
         }
 
         public int[] GetImageDimension(String imagePath)
@@ -178,11 +176,56 @@ namespace HeatmapGenerator
 
         }
 
-        // This doesn't work yet!
-        public void GenerateVideo(long startFrame, long endFrame)
+        public void GenerateInfoFile(long[] frames)
         {
+            String infoFileString = "";
 
-            Process.Start("ffmpeg.exe", "-f image2 -i img%d.jpg /output/a.mpg");
+            int i;
+            for (i = 0; i < frames.Length - 1; i++)
+            {
+                infoFileString +=
+                    "file '" + frames[i] + ".png'\r\n"
+                        + "duration " + (frames[i + 1] - frames[i])/1000 + "\r\n";
+            }
+
+            infoFileString += "file '" + frames[i - 1] + ".png'"; // final line
+
+            System.IO.File.WriteAllText(WriteDir + @"info.txt", infoFileString);
+
+        }
+
+        public void GenerateTimecodes(long[] frames)
+        {
+            String timecodes = "# timecode format v2";
+            for (int i = 0; i < frames.Length; i++)
+            {
+                timecodes += "\r\n" + frames[i];
+            }
+            System.IO.File.WriteAllText(WriteDir + @"timecodes.txt", timecodes);
+        }
+
+        // This doesn't work yet!
+        public void GenerateVideo()
+        {
+            String initialDir = Directory.GetCurrentDirectory();
+
+            Directory.SetCurrentDirectory(WriteDir);
+
+            Console.WriteLine("Attempting to generate video from " + WriteDir);
+
+            // Creating video
+            Process.Start("CMD.exe", "/C ffmpeg -i %d.png ffmpeg-unadj.mp4").WaitForExit();
+            Process.Start("CMD.exe", "/C mp4fpsmod -o vfr.mp4 -t timecodes.txt ffmpeg-unadj.mp4").WaitForExit();
+            Process.Start("CMD.exe", "/C ffmpeg -i vfr.mp4 -qscale 0 final-cfr.avi").WaitForExit();
+
+            // Cleaning up
+            Process.Start("CMD.exe", "/C del *.mp4 *.png *.txt");
+
+
+            Console.WriteLine("Finished generating video");
+
+            Directory.SetCurrentDirectory(initialDir);
+
         }
 
     }
