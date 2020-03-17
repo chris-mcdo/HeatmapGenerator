@@ -1,6 +1,6 @@
 # HeatmapGenerator
 C# console application: generates heatmaps from eye-tracking data (JSON) and image files (BMP). Creates "instantaneous" or global heatmaps, and videos (with addons).
-## What this does
+## What it does
 1. Reads eye-tracking data in JSON format (see samples).
 2. Generates intensity heatmap using Gaussian smoothing (kernel) function.
 3. Combines background image with heatmap using alpha compositing.
